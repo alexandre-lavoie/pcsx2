@@ -91,6 +91,8 @@ public slots:
 
 	void onSearchButtonClicked();
 
+	void onDumpMemoryButtonClicked();
+
 private:
 	std::vector<QTableWidget*> m_registerTableViews;
 

@@ -27,6 +27,7 @@
 #include "DebugTools/BiosDebugData.h"
 #include "DebugTools/MipsStackWalk.h"
 #include "common/BitCast.h"
+#include "common/FileSystem.h"
 
 #include "QtUtils.h"
 #include <QtGui/QClipboard>
@@ -91,6 +92,9 @@ CpuWidget::CpuWidget(QWidget* parent, DebugInterface& cpu)
 		else
 			m_ui.chkSearchHex->setEnabled(false);
 	});
+
+	connect(m_ui.btnDumpMemory, &QPushButton::clicked, this, &CpuWidget::onDumpMemoryButtonClicked);
+
 	m_ui.disassemblyWidget->SetCpu(&cpu);
 	m_ui.registerWidget->SetCpu(&cpu);
 	m_ui.memoryviewWidget->SetCpu(&cpu);
@@ -725,4 +729,68 @@ void CpuWidget::onSearchButtonClicked()
 	QFuture<std::vector<u32>> workerFuture =
 		QtConcurrent::run(startWorker, &m_cpu, searchType, searchStart, searchEnd, searchValue, searchHex ? 16 : 10);
 	workerWatcher->setFuture(workerFuture);
+}
+
+void CpuWidget::onDumpMemoryButtonClicked()
+{
+	const char *filename = m_ui.txtFile->text().toStdString().c_str();
+
+	bool ok;
+	const u32 startAddress = m_ui.txtDumpStart->text().toUInt(&ok, 16);
+
+	if (!ok)
+	{
+		QMessageBox::critical(this, tr("Debugger"), tr("Invalid start address"));
+		return;
+	}
+
+	const u32 endAddress = m_ui.txtDumpEnd->text().toUInt(&ok, 16);
+
+	if (!ok)
+	{
+		QMessageBox::critical(this, tr("Debugger"), tr("Invalid end address"));
+		return;
+	}
+
+	if (startAddress >= endAddress)
+	{
+		QMessageBox::critical(this, tr("Debugger"), tr("Start address can't be equal to or greater than the end address"));
+		return;
+	}
+
+	size_t size = sizeof(u8) * (endAddress - startAddress);
+
+	u8* data = (u8*)malloc(size);
+	if (data == nullptr) 
+	{
+		QMessageBox::critical(this, tr("Debugger"), tr("Failed to initialize buffer"));
+		return;
+	}
+
+	for (u32 i = 0; i < endAddress - startAddress; i++) 
+	{
+		u32 address = startAddress + i;
+		u8 byte = m_cpu.read8(address, ok);
+
+		if (ok)
+		{
+			data[i] = byte;
+		}
+		else
+		{
+			data[i] = 0;
+		}
+	}
+
+	bool status = FileSystem::WriteBinaryFile(filename, data, size);
+	if (status)
+	{
+		QMessageBox::information(this, tr("Debugger"), tr("Wrote dump successfully"));
+	}
+	else
+	{
+		QMessageBox::critical(this, tr("Debugger"), tr("Failed to write dump"));
+	}
+	
+	free(data);
 }
