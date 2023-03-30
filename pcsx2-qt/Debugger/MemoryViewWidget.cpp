@@ -33,9 +33,16 @@ using namespace QtUtils;
 /*
 	MemoryViewTable
 */
+
+void MemoryViewTable::SetScrollBar(QScrollBar* scrollBar)
+{
+	m_scrollBar = scrollBar;
+}
+
 void MemoryViewTable::UpdateStartAddress(u32 start)
 {
 	startAddress = start & ~0xF;
+	UpdateScrollBar(startAddress);
 }
 
 void MemoryViewTable::UpdateSelectedAddress(u32 selected, bool page)
@@ -55,6 +62,14 @@ void MemoryViewTable::UpdateSelectedAddress(u32 selected, bool page)
 		else
 			startAddress += 0x10;
 	}
+}
+
+void MemoryViewTable::UpdateScrollBar(u32 address)
+{
+	if (m_scrollBar == nullptr) return;
+
+	const u32 addressHighU28 = address >> 4;
+	m_scrollBar->setValue(addressHighU28);
 }
 
 void MemoryViewTable::DrawTable(QPainter& painter, const QPalette& palette, s32 height)
@@ -332,6 +347,13 @@ void MemoryViewWidget::SetCpu(DebugInterface* cpu)
 	m_table.UpdateStartAddress(0x480000);
 }
 
+void MemoryViewWidget::SetScrollBar(QScrollBar* scrollBar)
+{
+	m_scrollBar = scrollBar;
+	m_table.SetScrollBar(scrollBar);
+	connect(scrollBar, SIGNAL(valueChanged(int)), this, SLOT(handleScroll(int)));
+}
+
 void MemoryViewWidget::paintEvent(QPaintEvent* event)
 {
 	if (!m_cpu->isAlive())
@@ -501,4 +523,11 @@ void MemoryViewWidget::gotoAddress(u32 address)
 	m_table.selectedAddress = address;
 	this->repaint();
 	this->setFocus();
+}
+
+void MemoryViewWidget::handleScroll(int value)
+{
+	const u32 address = (u32)value << 4;
+	m_table.UpdateStartAddress(address);
+	this->repaint();
 }

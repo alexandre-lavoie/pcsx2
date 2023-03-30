@@ -91,8 +91,11 @@ CpuWidget::CpuWidget(QWidget* parent, DebugInterface& cpu)
 		else
 			m_ui.chkSearchHex->setEnabled(false);
 	});
+
+	m_ui.disassemblyWidget->SetScrollBar(m_ui.disassemblyScrollBar);
 	m_ui.disassemblyWidget->SetCpu(&cpu);
 	m_ui.registerWidget->SetCpu(&cpu);
+	m_ui.memoryviewWidget->SetScrollBar(m_ui.memoryviewScrollBar);
 	m_ui.memoryviewWidget->SetCpu(&cpu);
 
 	this->repaint();

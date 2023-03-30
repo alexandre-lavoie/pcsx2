@@ -314,6 +314,12 @@ void DisassemblyWidget::SetCpu(DebugInterface* cpu)
 	m_disassemblyManager.setCpu(cpu);
 }
 
+void DisassemblyWidget::SetScrollBar(QScrollBar* scrollBar)
+{
+	m_scrollBar = scrollBar;
+	connect(scrollBar, SIGNAL(valueChanged(int)), this, SLOT(handleScroll(int)));
+}
+
 QString DisassemblyWidget::GetLineDisasm(u32 address)
 {
 	DisassemblyLineInfo lineInfo;
@@ -725,6 +731,14 @@ QString DisassemblyWidget::FetchSelectionInfo(SelectionInfo selInfo)
 	return infoBlock;
 }
 
+void DisassemblyWidget::UpdateScrollBar(u32 address)
+{
+	if (m_scrollBar == nullptr) return;
+
+	const u32 addressHighU28 = address >> 4;
+	m_scrollBar->setValue(addressHighU28);
+}
+
 void DisassemblyWidget::gotoAddress(u32 address)
 {
 	const u32 destAddress = address & ~3;
@@ -735,4 +749,11 @@ void DisassemblyWidget::gotoAddress(u32 address)
 
 	this->repaint();
 	this->setFocus();
+}
+
+void DisassemblyWidget::handleScroll(int value)
+{
+	const u32 address = (u32)value << 4;
+	m_visibleStart = address;
+	this->repaint();
 }

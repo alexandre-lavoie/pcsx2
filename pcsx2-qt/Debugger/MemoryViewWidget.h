@@ -23,6 +23,7 @@
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QMenu>
 #include <QtWidgets/QTabBar>
+#include <QtWidgets/QScrollBar>
 #include <QtGui/QPainter>
 
 #include <vector>
@@ -39,6 +40,7 @@ class MemoryViewTable
 {
 	QWidget* parent;
 	DebugInterface* m_cpu;
+	QScrollBar* m_scrollBar;
 	MemoryViewType displayType = MemoryViewType::BYTE;
 	u32 rowCount;
 	u32 rowVisible;
@@ -66,8 +68,10 @@ public:
 	{
 		m_cpu = cpu;
 	}
+	void SetScrollBar(QScrollBar* scrollBar);
 	void UpdateStartAddress(u32 start);
 	void UpdateSelectedAddress(u32 selected, bool page = false);
+	void UpdateScrollBar(u32 address);
 	void DrawTable(QPainter& painter, const QPalette& palette, s32 height);
 	void SelectAt(QPoint pos);
 	u128 GetSelectedSegment();
@@ -94,6 +98,7 @@ public:
 	~MemoryViewWidget();
 
 	void SetCpu(DebugInterface* cpu);
+	void SetScrollBar(QScrollBar* scrollBar);
 
 protected:
 	void paintEvent(QPaintEvent* event);
@@ -109,7 +114,9 @@ public slots:
 	void contextCopyByte();
 	void contextCopySegment();
 	void contextCopyCharacter();
+
 	void gotoAddress(u32 address);
+	void handleScroll(int value);
 
 signals:
 	void gotoInDisasm(u32 address);
@@ -125,5 +132,6 @@ private:
 	QAction* m_actionDWORD;
 
 	DebugInterface* m_cpu;
+	QScrollBar* m_scrollBar;
 	MemoryViewTable m_table;
 };

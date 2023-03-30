@@ -22,6 +22,7 @@
 
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QMenu>
+#include <QtWidgets/QScrollBar>
 #include <QtGui/QPainter>
 
 class DisassemblyWidget final : public QWidget
@@ -34,6 +35,8 @@ public:
 
 	// Required because our constructor needs to take no extra arguments.
 	void SetCpu(DebugInterface* cpu);
+
+	void SetScrollBar(QScrollBar* scrollBar);
 
 	// Required for the breakpoint list (ugh wtf)
 	QString GetLineDisasm(u32 address);
@@ -64,7 +67,9 @@ public slots:
 	void contextAddFunction();
 	void contextRenameFunction();
 	void contextRemoveFunction();
+
 	void gotoAddress(u32 address);
+	void handleScroll(int value);
 
 signals:
 	void gotoInMemory(u32 address);
@@ -78,6 +83,8 @@ private:
 	void CreateCustomContextMenu();
 
 	DebugInterface* m_cpu;
+	QScrollBar* m_scrollBar;
+
 	u32 m_visibleStart = 0x00336318; // The address of the first opcode shown(row 0)
 	u32 m_visibleRows;
 	u32 m_selectedAddressStart = 0;
@@ -95,4 +102,5 @@ private:
 		INSTRUCTIONTEXT,
 	};
 	QString FetchSelectionInfo(SelectionInfo selInfo);
+	void UpdateScrollBar(u32 address);
 };
